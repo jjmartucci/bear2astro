@@ -3,6 +3,18 @@ const path = require("path");
 const cheerio = require("cheerio");
 const TurndownService = require("turndown");
 
+// Function to slugify a string
+function slugify(text) {
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
+
 const INPUT_FOLDER = "./test";
 const OUTPUT_FOLDER = "./out";
 const IMAGE_FOLDER = "./out/images";
@@ -85,15 +97,16 @@ function processHtmlFile(htmlFilePath) {
     // Remove the .hashtag spans from the HTML after extracting them
     $(".hashtag").remove();
 
-    // Process links to use RELATIVE_LINK_PATH
+    // Process links to use RELATIVE_LINK_PATH with slugified names
     $("a").each((i, elem) => {
       const href = $(elem).attr("href");
       if (href && !href.startsWith("http") && !href.startsWith("#")) {
         // It's a relative link
-        const linkPath = href.endsWith(".html")
-          ? RELATIVE_LINK_PATH + path.basename(href, ".html")
-          : href;
-        $(elem).attr("href", linkPath);
+        if (href.endsWith(".html")) {
+          const baseName = path.basename(href, ".html");
+          const slugifiedName = slugify(baseName);
+          $(elem).attr("href", RELATIVE_LINK_PATH + slugifiedName);
+        }
       }
     });
     
@@ -157,10 +170,12 @@ function processHtmlFile(htmlFilePath) {
       markdown,
     ].join("\n");
 
-    // Generate output filename
+    // Generate slugified output filename
+    const baseName = path.basename(htmlFilePath, path.extname(htmlFilePath));
+    const slugifiedName = slugify(baseName);
     const outputFilePath = path.join(
       outputDir,
-      `${path.basename(htmlFilePath, path.extname(htmlFilePath))}.md`
+      `${slugifiedName}.md`
     );
 
     // Write the Markdown file
