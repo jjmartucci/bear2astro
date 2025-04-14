@@ -15,6 +15,7 @@ function slugify(text) {
     .replace(/-+$/, ""); // Trim - from end of text
 }
 
+const ORGANIZED_BY_TAG = "mind-garden";
 const INPUT_FOLDER = "/Users/joe/Desktop/BearOut";
 const OUTPUT_FOLDER = "/Users/joe/git/jmartucci.com/src/content/garden";
 const IMAGE_FOLDER = "/Users/joe/git/jmartucci.com/public/garden";
@@ -94,7 +95,7 @@ function processHtmlFile(htmlFilePath) {
       if (tag) {
         const cleanTag = tag.startsWith("#") ? tag.substring(1) : tag;
         // Ignore the ORGANIZED_BY_TAG tag
-        if (cleanTag !== "ORGANIZED_BY_TAG") {
+        if (cleanTag !== ORGANIZED_BY_TAG) {
           tags.push(cleanTag);
         }
       }
