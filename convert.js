@@ -60,6 +60,18 @@ function processHtmlFile(htmlFilePath) {
     // Remove the .hashtag spans from the HTML after extracting them
     $(".hashtag").remove();
 
+    // Process links to use RELATIVE_LINK_PATH
+    $('a').each((i, elem) => {
+      const href = $(elem).attr('href');
+      if (href && !href.startsWith('http') && !href.startsWith('#')) {
+        // It's a relative link
+        const linkPath = href.endsWith('.html') 
+          ? RELATIVE_LINK_PATH + path.basename(href, '.html')
+          : href;
+        $(elem).attr('href', linkPath);
+      }
+    });
+
     // Convert HTML to Markdown
     const turndownService = new TurndownService({
       headingStyle: "atx",
