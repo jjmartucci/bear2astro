@@ -30,6 +30,13 @@ function processHtmlFile(htmlFilePath) {
 
     // Load HTML content into cheerio
     const $ = cheerio.load(htmlContent);
+    
+    // Extract metadata from head if available
+    const metaCreated = $('meta[name="created"]').attr('content') || new Date().toISOString();
+    const metaModified = $('meta[name="modified"]').attr('content') || new Date().toISOString();
+    
+    // Remove the head element so it's not in the markdown output
+    $('head').remove();
 
     // Extract title from h1
     const title = $("h1").first().text().trim() || "Untitled";
@@ -60,6 +67,8 @@ function processHtmlFile(htmlFilePath) {
       "---",
       `title: "${title}"`,
       `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]`,
+      `created: ${metaCreated}`,
+      `modified: ${metaModified}`,
       "---",
       "",
       markdown,
