@@ -106,13 +106,19 @@ function processHtmlFile(htmlFilePath) {
       
       if (srcPath && !srcPath.startsWith("http") && !srcPath.startsWith("data:")) {
         // It's a relative path to an image or attachment
-        const absoluteSrcPath = path.isAbsolute(srcPath) 
-          ? srcPath 
-          : path.resolve(baseDir, srcPath);
+        // Decode the URL encoded path for file system operations
+        const decodedSrcPath = decodeURIComponent(srcPath);
+        
+        const absoluteSrcPath = path.isAbsolute(decodedSrcPath) 
+          ? decodedSrcPath 
+          : path.resolve(baseDir, decodedSrcPath);
         
         if (fs.existsSync(absoluteSrcPath)) {
+          // Keep the original filename (possibly encoded) for the destination
           const fileName = path.basename(srcPath);
-          const destPath = path.join(IMAGE_FOLDER, fileName);
+          // But use decoded filename for the actual file system operation
+          const decodedFileName = path.basename(decodedSrcPath);
+          const destPath = path.join(IMAGE_FOLDER, decodedFileName);
           
           // Copy the file to the images folder - using synchronous method
           try {
@@ -120,6 +126,7 @@ function processHtmlFile(htmlFilePath) {
             console.log(`Copied: ${absoluteSrcPath} -> ${destPath}`);
             
             // Update the src/href attribute to point to the new location
+            // Keep the original encoding in the path
             $(elem).attr(attrName, RELATIVE_IMAGE_PATH + fileName);
           } catch (err) {
             console.error(`Error copying file ${absoluteSrcPath}: ${err.message}`);
