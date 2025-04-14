@@ -5,6 +5,7 @@ const TurndownService = require("turndown");
 
 const INPUT_FOLDER = "./test";
 const OUTPUT_FOLDER = "./out";
+const IMAGE_FOLDER = "./out/images";
 const RELATIVE_LINK_PATH = "/garden/plant/";
 
 // Create output directory if it doesn't exist
@@ -61,14 +62,14 @@ function processHtmlFile(htmlFilePath) {
     $(".hashtag").remove();
 
     // Process links to use RELATIVE_LINK_PATH
-    $('a').each((i, elem) => {
-      const href = $(elem).attr('href');
-      if (href && !href.startsWith('http') && !href.startsWith('#')) {
+    $("a").each((i, elem) => {
+      const href = $(elem).attr("href");
+      if (href && !href.startsWith("http") && !href.startsWith("#")) {
         // It's a relative link
-        const linkPath = href.endsWith('.html') 
-          ? RELATIVE_LINK_PATH + path.basename(href, '.html')
+        const linkPath = href.endsWith(".html")
+          ? RELATIVE_LINK_PATH + path.basename(href, ".html")
           : href;
-        $(elem).attr('href', linkPath);
+        $(elem).attr("href", linkPath);
       }
     });
 
