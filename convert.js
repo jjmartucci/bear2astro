@@ -85,6 +85,16 @@ function processHtmlFile(htmlFilePath) {
 
     // Extract the first paragraph for description
     const firstParagraph = $("p").first().text().trim() || "";
+    
+    // Extract the first image if available
+    let firstImagePath = "";
+    const firstImg = $("img").first();
+    if (firstImg.length) {
+      const srcPath = firstImg.attr("src");
+      if (srcPath && !srcPath.startsWith("http") && !srcPath.startsWith("data:")) {
+        firstImagePath = RELATIVE_IMAGE_PATH + path.basename(srcPath);
+      }
+    }
 
     // Remove the head element so it's not in the markdown output
     $("head").remove();
@@ -189,6 +199,7 @@ function processHtmlFile(htmlFilePath) {
       "---",
       `title: "${title}"`,
       `description: "${firstParagraph}"`,
+      firstImagePath ? `image: "${firstImagePath}"` : "",
       `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]`,
       `created: ${metaCreated}`,
       `modified: ${metaModified}`,
