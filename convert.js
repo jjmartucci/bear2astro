@@ -74,12 +74,10 @@ function processHtmlFile(htmlFilePath) {
       $('meta[name="created"]').attr("content") || new Date().toISOString();
     const metaModified =
       $('meta[name="modified"]').attr("content") || new Date().toISOString();
+    const title = $('meta[name="title"]').attr("content") || $('title').text().trim() || "Untitled";
 
     // Remove the head element so it's not in the markdown output
     $("head").remove();
-
-    // Extract title from h1
-    const title = $("h1").first().text().trim() || "Untitled";
 
     // Extract hashtags from .hashtag spans
     const tags = [];
@@ -91,8 +89,7 @@ function processHtmlFile(htmlFilePath) {
       }
     });
 
-    // Remove the h1 from the HTML as it will be in the YAML header
-    $("h1").first().remove();
+    // Keep the h1 in the output
 
     // Remove the .hashtag spans from the HTML after extracting them
     $(".hashtag").remove();
