@@ -8,18 +8,22 @@ function slugify(text) {
   return text
     .toString()
     .toLowerCase()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+    .replace(/\-\-+/g, "-") // Replace multiple - with single -
+    .replace(/^-+/, "") // Trim - from start of text
+    .replace(/-+$/, ""); // Trim - from end of text
 }
 
-const INPUT_FOLDER = "./test";
-const OUTPUT_FOLDER = "./out";
-const IMAGE_FOLDER = "./out/images";
+const INPUT_FOLDER = "/Users/joe/Desktop/BearOut";
+const OUTPUT_FOLDER = "/Users/joe/git/jmartucci.com/src/content/garden";
+const IMAGE_FOLDER = "/Users/joe/git/jmartucci.com/public/garden";
+
+// the output link format
 const RELATIVE_LINK_PATH = "/garden/plant/";
-const RELATIVE_IMAGE_PATH = "/images/";
+
+// the output image format.
+const RELATIVE_IMAGE_PATH = "/garden/";
 
 // Create output directory if it doesn't exist
 if (!fs.existsSync(OUTPUT_FOLDER)) {
@@ -39,7 +43,7 @@ function copyFile(source, destination) {
     if (!fs.existsSync(destDir)) {
       fs.mkdirSync(destDir, { recursive: true });
     }
-    
+
     fs.copyFileSync(source, destination);
     console.log(`Copied: ${source} -> ${destination}`);
     return true;
@@ -74,7 +78,10 @@ function processHtmlFile(htmlFilePath) {
       $('meta[name="created"]').attr("content") || new Date().toISOString();
     const metaModified =
       $('meta[name="modified"]').attr("content") || new Date().toISOString();
-    const title = $('meta[name="title"]').attr("content") || $('title').text().trim() || "Untitled";
+    const title =
+      $('meta[name="title"]').attr("content") ||
+      $("title").text().trim() ||
+      "Untitled";
 
     // Remove the head element so it's not in the markdown output
     $("head").remove();
@@ -106,40 +113,48 @@ function processHtmlFile(htmlFilePath) {
         }
       }
     });
-    
+
     // Process images and attachments
     const baseDir = path.dirname(htmlFilePath);
-    $("img, [href$='.pdf'], [href$='.doc'], [href$='.docx'], [href$='.xls'], [href$='.xlsx'], [href$='.ppt'], [href$='.pptx'], [href$='.zip']").each((i, elem) => {
-      const isImage = elem.tagName === 'img';
-      const attrName = isImage ? 'src' : 'href';
+    $(
+      "img, [href$='.pdf'], [href$='.doc'], [href$='.docx'], [href$='.xls'], [href$='.xlsx'], [href$='.ppt'], [href$='.pptx'], [href$='.zip']"
+    ).each((i, elem) => {
+      const isImage = elem.tagName === "img";
+      const attrName = isImage ? "src" : "href";
       const srcPath = $(elem).attr(attrName);
-      
-      if (srcPath && !srcPath.startsWith("http") && !srcPath.startsWith("data:")) {
+
+      if (
+        srcPath &&
+        !srcPath.startsWith("http") &&
+        !srcPath.startsWith("data:")
+      ) {
         // It's a relative path to an image or attachment
         // Decode the URL encoded path for file system operations
         const decodedSrcPath = decodeURIComponent(srcPath);
-        
-        const absoluteSrcPath = path.isAbsolute(decodedSrcPath) 
-          ? decodedSrcPath 
+
+        const absoluteSrcPath = path.isAbsolute(decodedSrcPath)
+          ? decodedSrcPath
           : path.resolve(baseDir, decodedSrcPath);
-        
+
         if (fs.existsSync(absoluteSrcPath)) {
           // Keep the original filename (possibly encoded) for the destination
           const fileName = path.basename(srcPath);
           // But use decoded filename for the actual file system operation
           const decodedFileName = path.basename(decodedSrcPath);
           const destPath = path.join(IMAGE_FOLDER, decodedFileName);
-          
+
           // Copy the file to the images folder - using synchronous method
           try {
             fs.copyFileSync(absoluteSrcPath, destPath);
             console.log(`Copied: ${absoluteSrcPath} -> ${destPath}`);
-            
+
             // Update the src/href attribute to point to the new location
             // Keep the original encoding in the path
             $(elem).attr(attrName, RELATIVE_IMAGE_PATH + fileName);
           } catch (err) {
-            console.error(`Error copying file ${absoluteSrcPath}: ${err.message}`);
+            console.error(
+              `Error copying file ${absoluteSrcPath}: ${err.message}`
+            );
           }
         } else {
           console.warn(`Warning: File not found: ${absoluteSrcPath}`);
@@ -170,10 +185,7 @@ function processHtmlFile(htmlFilePath) {
     // Generate slugified output filename
     const baseName = path.basename(htmlFilePath, path.extname(htmlFilePath));
     const slugifiedName = slugify(baseName);
-    const outputFilePath = path.join(
-      outputDir,
-      `${slugifiedName}.md`
-    );
+    const outputFilePath = path.join(outputDir, `${slugifiedName}.md`);
 
     // Write the Markdown file
     fs.writeFile(outputFilePath, yamlHeader, "utf8", (err) => {
