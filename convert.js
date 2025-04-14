@@ -22,6 +22,12 @@ if (!fs.existsSync(IMAGE_FOLDER)) {
 // Function to copy a file
 function copyFile(source, destination) {
   try {
+    // Make sure the destination directory exists
+    const destDir = path.dirname(destination);
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    
     fs.copyFileSync(source, destination);
     console.log(`Copied: ${source} -> ${destination}`);
     return true;
@@ -100,17 +106,24 @@ function processHtmlFile(htmlFilePath) {
       
       if (srcPath && !srcPath.startsWith("http") && !srcPath.startsWith("data:")) {
         // It's a relative path to an image or attachment
-        const absoluteSrcPath = path.resolve(baseDir, srcPath);
+        const absoluteSrcPath = path.isAbsolute(srcPath) 
+          ? srcPath 
+          : path.resolve(baseDir, srcPath);
         
         if (fs.existsSync(absoluteSrcPath)) {
           const fileName = path.basename(srcPath);
           const destPath = path.join(IMAGE_FOLDER, fileName);
           
-          // Copy the file to the images folder
-          copyFile(absoluteSrcPath, destPath);
-          
-          // Update the src/href attribute to point to the new location
-          $(elem).attr(attrName, RELATIVE_IMAGE_PATH + fileName);
+          // Copy the file to the images folder - using synchronous method
+          try {
+            fs.copyFileSync(absoluteSrcPath, destPath);
+            console.log(`Copied: ${absoluteSrcPath} -> ${destPath}`);
+            
+            // Update the src/href attribute to point to the new location
+            $(elem).attr(attrName, RELATIVE_IMAGE_PATH + fileName);
+          } catch (err) {
+            console.error(`Error copying file ${absoluteSrcPath}: ${err.message}`);
+          }
         } else {
           console.warn(`Warning: File not found: ${absoluteSrcPath}`);
         }
