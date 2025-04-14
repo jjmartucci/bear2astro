@@ -107,7 +107,9 @@ function processHtmlFile(htmlFilePath) {
       if (href && !href.startsWith("http") && !href.startsWith("#")) {
         // It's a relative link
         if (href.endsWith(".html")) {
-          const baseName = path.basename(href, ".html");
+          // Decode the URL encoded filename before slugifying
+          const decodedHref = decodeURIComponent(href);
+          const baseName = path.basename(decodedHref, ".html");
           const slugifiedName = slugify(baseName);
           $(elem).attr("href", RELATIVE_LINK_PATH + slugifiedName);
         }
