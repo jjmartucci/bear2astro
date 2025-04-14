@@ -5,6 +5,7 @@ const TurndownService = require("turndown");
 
 const INPUT_FOLDER = "./test";
 const OUTPUT_FOLDER = "./out";
+const RELATIVE_LINK_PATH = "/garden/plant/";
 
 // Create output directory if it doesn't exist
 if (!fs.existsSync(OUTPUT_FOLDER)) {
@@ -15,12 +16,12 @@ if (!fs.existsSync(OUTPUT_FOLDER)) {
 function processHtmlFile(htmlFilePath) {
   const relativePath = path.relative(INPUT_FOLDER, htmlFilePath);
   const outputDir = path.join(OUTPUT_FOLDER, path.dirname(relativePath));
-  
+
   // Create output subdirectories if needed
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
-  
+
   // Read the HTML file
   fs.readFile(htmlFilePath, "utf8", (err, htmlContent) => {
     if (err) {
@@ -30,13 +31,15 @@ function processHtmlFile(htmlFilePath) {
 
     // Load HTML content into cheerio
     const $ = cheerio.load(htmlContent);
-    
+
     // Extract metadata from head if available
-    const metaCreated = $('meta[name="created"]').attr('content') || new Date().toISOString();
-    const metaModified = $('meta[name="modified"]').attr('content') || new Date().toISOString();
-    
+    const metaCreated =
+      $('meta[name="created"]').attr("content") || new Date().toISOString();
+    const metaModified =
+      $('meta[name="modified"]').attr("content") || new Date().toISOString();
+
     // Remove the head element so it's not in the markdown output
-    $('head').remove();
+    $("head").remove();
 
     // Extract title from h1
     const title = $("h1").first().text().trim() || "Untitled";
@@ -53,7 +56,7 @@ function processHtmlFile(htmlFilePath) {
 
     // Remove the h1 from the HTML as it will be in the YAML header
     $("h1").first().remove();
-    
+
     // Remove the .hashtag spans from the HTML after extracting them
     $(".hashtag").remove();
 
@@ -97,7 +100,7 @@ function processHtmlFile(htmlFilePath) {
 // Check if a specific file was provided as an argument
 if (process.argv.length >= 3) {
   const htmlFilePath = process.argv[2];
-  if (fs.existsSync(htmlFilePath) && htmlFilePath.endsWith('.html')) {
+  if (fs.existsSync(htmlFilePath) && htmlFilePath.endsWith(".html")) {
     processHtmlFile(htmlFilePath);
   } else {
     console.error(`File not found or not an HTML file: ${htmlFilePath}`);
@@ -105,30 +108,30 @@ if (process.argv.length >= 3) {
 } else {
   // Process all HTML files in the INPUT_FOLDER
   console.log(`Processing all HTML files in ${INPUT_FOLDER}...`);
-  
+
   // Function to recursively find all HTML files
   function findHtmlFiles(dir) {
     let results = [];
     const files = fs.readdirSync(dir);
-    
+
     for (const file of files) {
       const filePath = path.join(dir, file);
       const stat = fs.statSync(filePath);
-      
+
       if (stat.isDirectory()) {
         // Recursively search directories
         results = results.concat(findHtmlFiles(filePath));
-      } else if (file.endsWith('.html')) {
+      } else if (file.endsWith(".html")) {
         results.push(filePath);
       }
     }
-    
+
     return results;
   }
-  
+
   try {
     const htmlFiles = findHtmlFiles(INPUT_FOLDER);
-    
+
     if (htmlFiles.length === 0) {
       console.log(`No HTML files found in ${INPUT_FOLDER}`);
     } else {
