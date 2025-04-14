@@ -83,6 +83,9 @@ function processHtmlFile(htmlFilePath) {
       $('meta[name="title"]').attr("content") ||
       $("title").text().trim() ||
       "Untitled";
+    
+    // Extract the first paragraph for description
+    const firstParagraph = $("p").first().text().trim() || "";
 
     // Remove the head element so it's not in the markdown output
     $("head").remove();
@@ -181,6 +184,7 @@ function processHtmlFile(htmlFilePath) {
     const yamlHeader = [
       "---",
       `title: "${title}"`,
+      `description: "${firstParagraph}"`,
       `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]`,
       `created: ${metaCreated}`,
       `modified: ${metaModified}`,
