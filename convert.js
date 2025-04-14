@@ -92,7 +92,11 @@ function processHtmlFile(htmlFilePath) {
       const tag = $(elem).text().trim();
       // Remove # if present and add to tags array
       if (tag) {
-        tags.push(tag.startsWith("#") ? tag.substring(1) : tag);
+        const cleanTag = tag.startsWith("#") ? tag.substring(1) : tag;
+        // Ignore the ORGANIZED_BY_TAG tag
+        if (cleanTag !== "ORGANIZED_BY_TAG") {
+          tags.push(cleanTag);
+        }
       }
     });
 
