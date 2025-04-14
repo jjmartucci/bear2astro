@@ -7,10 +7,28 @@ const INPUT_FOLDER = "./test";
 const OUTPUT_FOLDER = "./out";
 const IMAGE_FOLDER = "./out/images";
 const RELATIVE_LINK_PATH = "/garden/plant/";
+const RELATIVE_IMAGE_PATH = "/images/";
 
 // Create output directory if it doesn't exist
 if (!fs.existsSync(OUTPUT_FOLDER)) {
   fs.mkdirSync(OUTPUT_FOLDER, { recursive: true });
+}
+
+// Create images directory if it doesn't exist
+if (!fs.existsSync(IMAGE_FOLDER)) {
+  fs.mkdirSync(IMAGE_FOLDER, { recursive: true });
+}
+
+// Function to copy a file
+function copyFile(source, destination) {
+  try {
+    fs.copyFileSync(source, destination);
+    console.log(`Copied: ${source} -> ${destination}`);
+    return true;
+  } catch (err) {
+    console.error(`Error copying file ${source}: ${err.message}`);
+    return false;
+  }
 }
 
 // Process a single HTML file
@@ -70,6 +88,32 @@ function processHtmlFile(htmlFilePath) {
           ? RELATIVE_LINK_PATH + path.basename(href, ".html")
           : href;
         $(elem).attr("href", linkPath);
+      }
+    });
+    
+    // Process images and attachments
+    const baseDir = path.dirname(htmlFilePath);
+    $("img, [href$='.pdf'], [href$='.doc'], [href$='.docx'], [href$='.xls'], [href$='.xlsx'], [href$='.ppt'], [href$='.pptx'], [href$='.zip']").each((i, elem) => {
+      const isImage = elem.tagName === 'img';
+      const attrName = isImage ? 'src' : 'href';
+      const srcPath = $(elem).attr(attrName);
+      
+      if (srcPath && !srcPath.startsWith("http") && !srcPath.startsWith("data:")) {
+        // It's a relative path to an image or attachment
+        const absoluteSrcPath = path.resolve(baseDir, srcPath);
+        
+        if (fs.existsSync(absoluteSrcPath)) {
+          const fileName = path.basename(srcPath);
+          const destPath = path.join(IMAGE_FOLDER, fileName);
+          
+          // Copy the file to the images folder
+          copyFile(absoluteSrcPath, destPath);
+          
+          // Update the src/href attribute to point to the new location
+          $(elem).attr(attrName, RELATIVE_IMAGE_PATH + fileName);
+        } else {
+          console.warn(`Warning: File not found: ${absoluteSrcPath}`);
+        }
       }
     });
 
