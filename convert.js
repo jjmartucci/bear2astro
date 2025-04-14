@@ -95,9 +95,14 @@ function processHtmlFile(htmlFilePath) {
       const tag = $(elem).text().trim();
       // Remove # if present and add to tags array
       if (tag) {
-        const cleanTag = tag.startsWith("#") ? tag.substring(1) : tag;
+        let cleanTag = tag.startsWith("#") ? tag.substring(1) : tag;
         // Ignore the ORGANIZED_BY_TAG tag
         if (cleanTag !== ORGANIZED_BY_TAG) {
+          // If UNNEST_TAGS is true and the tag has a parent/child format,
+          // only use the child part
+          if (UNNEST_TAGS === 'true' && cleanTag.includes('/')) {
+            cleanTag = cleanTag.split('/').pop();
+          }
           tags.push(cleanTag);
         }
       }
