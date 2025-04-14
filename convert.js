@@ -15,16 +15,15 @@ function slugify(text) {
     .replace(/-+$/, ""); // Trim - from end of text
 }
 
-const ORGANIZED_BY_TAG = "mind-garden";
-const INPUT_FOLDER = "/Users/joe/Desktop/BearOut";
-const OUTPUT_FOLDER = "/Users/joe/git/jmartucci.com/src/content/garden";
-const IMAGE_FOLDER = "/Users/joe/git/jmartucci.com/public/garden";
-
-// the output link format
-const RELATIVE_LINK_PATH = "/garden/plant/";
-
-// the output image format.
-const RELATIVE_IMAGE_PATH = "/garden/";
+const {
+  ORGANIZED_BY_TAG,
+  INPUT_FOLDER,
+  OUTPUT_FOLDER,
+  IMAGE_FOLDER,
+  RELATIVE_LINK_PATH,
+  RELATIVE_IMAGE_PATH,
+  UNNEST_TAGS,
+} = process.env;
 
 // Create output directory if it doesn't exist
 if (!fs.existsSync(OUTPUT_FOLDER)) {
@@ -83,7 +82,7 @@ function processHtmlFile(htmlFilePath) {
       $('meta[name="title"]').attr("content") ||
       $("title").text().trim() ||
       "Untitled";
-    
+
     // Extract the first paragraph for description
     const firstParagraph = $("p").first().text().trim() || "";
 
