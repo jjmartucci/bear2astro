@@ -53,6 +53,9 @@ function processHtmlFile(htmlFilePath) {
 
     // Remove the h1 from the HTML as it will be in the YAML header
     $("h1").first().remove();
+    
+    // Remove the .hashtag spans from the HTML after extracting them
+    $(".hashtag").remove();
 
     // Convert HTML to Markdown
     const turndownService = new TurndownService({
