@@ -136,8 +136,13 @@ function processHtmlFile(htmlFilePath) {
       // Remove # if present and add to tags array
       if (tag) {
         let cleanTag = tag.startsWith("#") ? tag.substring(1) : tag;
-        // Ignore the ORGANIZED_BY_TAG tag
-        if (cleanTag !== ORGANIZED_BY_TAG) {
+        // Parse the IGNORE_TAGS list
+        const ignoreTagsList = IGNORE_TAGS
+          ? IGNORE_TAGS.split(",").map((item) => item.trim().toLowerCase())
+          : [];
+        
+        // Ignore tags in the IGNORE_TAGS list
+        if (!ignoreTagsList.includes(cleanTag.toLowerCase())) {
           // If UNNEST_TAGS is true and the tag has a parent/child format,
           // only use the child part
           if (UNNEST_TAGS === "true" && cleanTag.includes("/")) {
