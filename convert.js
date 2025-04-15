@@ -191,6 +191,29 @@ function processHtmlFile(htmlFilePath) {
       headingStyle: "atx",
       codeBlockStyle: "fenced",
     });
+    
+    // Add custom rule for iframes and embedded content
+    turndownService.addRule('iframe', {
+      filter: ['iframe', 'embed', 'object'],
+      replacement: function(content, node) {
+        const src = node.getAttribute('src') || '';
+        const width = node.getAttribute('width') || '';
+        const height = node.getAttribute('height') || '';
+        const title = node.getAttribute('title') || '';
+        
+        let attributes = [];
+        if (width) attributes.push(`width="${width}"`);
+        if (height) attributes.push(`height="${height}"`);
+        if (title) attributes.push(`title="${title}"`);
+        
+        const attributeString = attributes.length > 0 ? ' ' + attributes.join(' ') : '';
+        
+        // Return HTML wrapped in markdown code fence to preserve it
+        return '\n\n```html\n' + 
+               `<iframe src="${src}"${attributeString}></iframe>` + 
+               '\n```\n\n';
+      }
+    });
 
     const markdown = turndownService.turndown($.html());
 
