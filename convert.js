@@ -273,7 +273,23 @@ function processHtmlFile(htmlFilePath) {
       replacement: function(content, node) {
         // Preserve the ID for footnote targets
         if (node.id) {
-          return `<div id="${node.id}">${content}</div>`;
+          // Extract the footnote number from the ID or content
+          const idMatch = node.id.match(/\d+$/);
+          const number = idMatch ? idMatch[0] : '';
+          
+          // Look for backref links in the footnote content
+          const $ = cheerio.load(`<div>${content}</div>`);
+          const backref = $('a.footnote-backref, a[rev="footnote"]').first();
+          
+          if (backref.length && backref.attr('href')) {
+            const href = backref.attr('href');
+            // Keep the backref link in the content
+            return `<div id="${node.id}">${content} <a href="${href}">↩</a></div>`;
+          } else {
+            // If no backref found, try to create one based on common patterns
+            const refId = `fnref${number}` || `footnote-ref-${node.id}`;
+            return `<div id="${node.id}">${content} <a href="#${refId}">↩</a></div>`;
+          }
         }
         return content;
       }
