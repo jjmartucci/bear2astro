@@ -208,10 +208,10 @@ function processHtmlFile(htmlFilePath) {
         
         const attributeString = attributes.length > 0 ? ' ' + attributes.join(' ') : '';
         
-        // Return HTML wrapped in markdown code fence to preserve it
-        return '\n\n```html\n' + 
+        // Return raw HTML to be preserved in the markdown
+        return '\n\n' + 
                `<iframe src="${src}"${attributeString}></iframe>` + 
-               '\n```\n\n';
+               '\n\n';
       }
     });
 
