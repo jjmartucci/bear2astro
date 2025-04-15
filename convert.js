@@ -23,6 +23,7 @@ const {
   RELATIVE_LINK_PATH,
   RELATIVE_IMAGE_PATH,
   UNNEST_TAGS,
+  IGNORE_META,
 } = process.env;
 
 // Create output directory if it doesn't exist
@@ -76,32 +77,40 @@ function processHtmlFile(htmlFilePath) {
     // Extract metadata from head if available
     // If a metatag appears twice, use the second one
     const metaCreatedElements = $('meta[name="created"]');
-    const metaCreated = 
-      metaCreatedElements.length > 1 
-        ? $(metaCreatedElements[metaCreatedElements.length - 1]).attr("content") 
-        : (metaCreatedElements.attr("content") || new Date().toISOString());
-    
+    const metaCreated =
+      metaCreatedElements.length > 1
+        ? $(metaCreatedElements[metaCreatedElements.length - 1]).attr("content")
+        : metaCreatedElements.attr("content") || new Date().toISOString();
+
     const metaModifiedElements = $('meta[name="modified"]');
-    const metaModified = 
-      metaModifiedElements.length > 1 
-        ? $(metaModifiedElements[metaModifiedElements.length - 1]).attr("content") 
-        : (metaModifiedElements.attr("content") || new Date().toISOString());
-    
+    const metaModified =
+      metaModifiedElements.length > 1
+        ? $(metaModifiedElements[metaModifiedElements.length - 1]).attr(
+            "content"
+          )
+        : metaModifiedElements.attr("content") || new Date().toISOString();
+
     const titleElements = $('meta[name="title"]');
-    const title = 
-      titleElements.length > 1 
-        ? $(titleElements[titleElements.length - 1]).attr("content") 
-        : (titleElements.attr("content") || $("title").text().trim() || "Untitled");
+    const title =
+      titleElements.length > 1
+        ? $(titleElements[titleElements.length - 1]).attr("content")
+        : titleElements.attr("content") ||
+          $("title").text().trim() ||
+          "Untitled";
 
     // Extract the first paragraph for description
     const firstParagraph = $("p").first().text().trim() || "";
-    
+
     // Extract the first image if available
     let firstImagePath = "";
     const firstImg = $("img").first();
     if (firstImg.length) {
       const srcPath = firstImg.attr("src");
-      if (srcPath && !srcPath.startsWith("http") && !srcPath.startsWith("data:")) {
+      if (
+        srcPath &&
+        !srcPath.startsWith("http") &&
+        !srcPath.startsWith("data:")
+      ) {
         firstImagePath = RELATIVE_IMAGE_PATH + path.basename(srcPath);
       }
     }
@@ -120,8 +129,8 @@ function processHtmlFile(htmlFilePath) {
         if (cleanTag !== ORGANIZED_BY_TAG) {
           // If UNNEST_TAGS is true and the tag has a parent/child format,
           // only use the child part
-          if (UNNEST_TAGS === 'true' && cleanTag.includes('/')) {
-            cleanTag = cleanTag.split('/').pop();
+          if (UNNEST_TAGS === "true" && cleanTag.includes("/")) {
+            cleanTag = cleanTag.split("/").pop();
           }
           tags.push(cleanTag);
         }
@@ -205,31 +214,29 @@ function processHtmlFile(htmlFilePath) {
       codeBlockStyle: "fenced",
     });
 
-    
     // Add custom rule for iframes and embedded content
-    turndownService.addRule('iframe', {
-      filter: ['iframe', 'embed', 'object'],
-      replacement: function(content, node) {
-        const src = node.getAttribute('src') || '';
-        const width = node.getAttribute('width') || '';
-        const height = node.getAttribute('height') || '';
-        const title = node.getAttribute('title') || '';
-        
+    turndownService.addRule("iframe", {
+      filter: ["iframe", "embed", "object"],
+      replacement: function (content, node) {
+        const src = node.getAttribute("src") || "";
+        const width = node.getAttribute("width") || "";
+        const height = node.getAttribute("height") || "";
+        const title = node.getAttribute("title") || "";
+
         let attributes = [];
         if (width) attributes.push(`width="${width}"`);
         if (height) attributes.push(`height="${height}"`);
         if (title) attributes.push(`title="${title}"`);
-        
-        const attributeString = attributes.length > 0 ? ' ' + attributes.join(' ') : '';
-        
+
+        const attributeString =
+          attributes.length > 0 ? " " + attributes.join(" ") : "";
+
         // Return raw HTML to be preserved in the markdown
-        return '\n\n' + 
-               `<iframe src="${src}"${attributeString}></iframe>` + 
-               '\n\n';
-      }
+        return (
+          "\n\n" + `<iframe src="${src}"${attributeString}></iframe>` + "\n\n"
+        );
+      },
     });
-    
-    
 
     const markdown = turndownService.turndown($.html());
 
