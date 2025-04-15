@@ -74,32 +74,40 @@ function processHtmlFile(htmlFilePath) {
     // Load HTML content into cheerio
     const $ = cheerio.load(htmlContent);
 
-    // Extract metadata from head if available
-    // If a metatag appears twice, use the second one
-    const metaCreatedElements = $('meta[name="created"]');
-    const metaCreated =
-      metaCreatedElements.length > 1
-        ? $(metaCreatedElements[metaCreatedElements.length - 1]).attr("content")
-        : metaCreatedElements.attr("content") || new Date().toISOString();
-
-    const metaModifiedElements = $('meta[name="modified"]');
-    const metaModified =
-      metaModifiedElements.length > 1
-        ? $(metaModifiedElements[metaModifiedElements.length - 1]).attr(
-            "content"
-          )
-        : metaModifiedElements.attr("content") || new Date().toISOString();
-
-    const titleElements = $('meta[name="title"]');
-    const title =
-      titleElements.length > 1
-        ? $(titleElements[titleElements.length - 1]).attr("content")
-        : titleElements.attr("content") ||
-          $("title").text().trim() ||
-          "Untitled";
-
-    // Extract the first paragraph for description
-    const firstParagraph = $("p").first().text().trim() || "";
+    // Parse the IGNORE_META list
+    const ignoreMetaList = IGNORE_META ? IGNORE_META.split(',').map(item => item.trim().toLowerCase()) : [];
+    
+    // Extract all meta tags and create a metadata object
+    const metadata = {};
+    
+    // Process all meta tags with 'name' attribute
+    $('meta[name]').each((i, elem) => {
+      const name = $(elem).attr('name').toLowerCase();
+      const content = $(elem).attr('content');
+      
+      // Skip meta tags in the ignore list
+      if (ignoreMetaList.includes(name)) {
+        return;
+      }
+      
+      // If a metatag appears twice, use the second one
+      metadata[name] = content;
+    });
+    
+    // Ensure we have the basic required metadata
+    if (!metadata.created) {
+      metadata.created = new Date().toISOString();
+    }
+    
+    if (!metadata.modified) {
+      metadata.modified = new Date().toISOString();
+    }
+    
+    // Get title from meta or title tag
+    const title = metadata.title || $("title").text().trim() || "Untitled";
+    
+    // Extract the first paragraph for description if not in metadata
+    const description = metadata.description || $("p").first().text().trim() || "";
 
     // Extract the first image if available
     let firstImagePath = "";
@@ -241,18 +249,32 @@ function processHtmlFile(htmlFilePath) {
     const markdown = turndownService.turndown($.html());
 
     // Create YAML front matter
-    const yamlHeader = [
-      "---",
-      `title: "${title}"`,
-      `description: "${firstParagraph}"`,
-      firstImagePath ? `image: "${firstImagePath}"` : "",
-      `tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]`,
-      `created: ${metaCreated}`,
-      `modified: ${metaModified}`,
-      "---",
-      "",
-      markdown,
-    ].join("\n");
+    let yamlLines = ["---"];
+    
+    // Add title and description first
+    yamlLines.push(`title: "${title}"`);
+    yamlLines.push(`description: "${description}"`);
+    
+    // Add image if available
+    if (firstImagePath) {
+      yamlLines.push(`image: "${firstImagePath}"`);
+    }
+    
+    // Add tags
+    yamlLines.push(`tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]`);
+    
+    // Add all other metadata from meta tags
+    for (const [key, value] of Object.entries(metadata)) {
+      // Skip title and description as they're already added
+      if (key !== 'title' && key !== 'description') {
+        yamlLines.push(`${key}: ${value}`);
+      }
+    }
+    
+    yamlLines.push("---");
+    yamlLines.push("");
+    
+    const yamlHeader = yamlLines.join("\n") + markdown;
 
     // Generate slugified output filename
     const baseName = path.basename(htmlFilePath, path.extname(htmlFilePath));
