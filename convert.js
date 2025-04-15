@@ -195,25 +195,6 @@ function processHtmlFile(htmlFilePath) {
       codeBlockStyle: "fenced",
     });
 
-    // Preserve ID attributes in the output
-    turndownService.addRule('preserveIds', {
-      filter: function(node) {
-        // Apply to any element with an ID attribute
-        return node.id && node.id.length > 0;
-      },
-      replacement: function(content, node, options) {
-        // If this is a heading, add the ID as an anchor
-        if (node.tagName.match(/^H[1-6]$/)) {
-          const level = node.tagName.charAt(1);
-          const prefix = '#'.repeat(level);
-          return `${prefix} ${content} {#${node.id}}\n\n`;
-        }
-        
-        // For other elements, add the ID as an HTML attribute
-        // This will be preserved in the markdown
-        return `<span id="${node.id}">${content}</span>`;
-      }
-    });
     
     // Add custom rule for iframes and embedded content
     turndownService.addRule('iframe', {
@@ -238,62 +219,6 @@ function processHtmlFile(htmlFilePath) {
       }
     });
     
-    // Add custom rule for footnote references
-    turndownService.addRule('footnoteReference', {
-      filter: function(node) {
-        // Match elements that are likely footnote references
-        return (
-          (node.tagName === 'A' || node.tagName === 'SUP') &&
-          (node.classList.contains('footnote-ref') || 
-           node.getAttribute('role') === 'doc-noteref' ||
-           (node.textContent.match(/^\[\d+\]$/) && node.getAttribute('href')?.startsWith('#')))
-        );
-      },
-      replacement: function(content, node) {
-        // Get the href target
-        const href = node.getAttribute('href');
-        if (href && href.startsWith('#')) {
-          // Preserve the link with the original ID reference
-          return `<a href="${href}">${content}</a>`;
-        }
-        return content;
-      }
-    });
-    
-    // Add custom rule for footnotes
-    turndownService.addRule('footnote', {
-      filter: function(node) {
-        // Match elements with class 'footnote' or role 'doc-footnote'
-        return (
-          node.classList && 
-          (node.classList.contains('footnote') || 
-           node.getAttribute('role') === 'doc-footnote')
-        );
-      },
-      replacement: function(content, node) {
-        // Preserve the ID for footnote targets
-        if (node.id) {
-          // Extract the footnote number from the ID or content
-          const idMatch = node.id.match(/\d+$/);
-          const number = idMatch ? idMatch[0] : '';
-          
-          // Look for backref links in the footnote content
-          const $ = cheerio.load(`<div>${content}</div>`);
-          const backref = $('a.footnote-backref, a[rev="footnote"]').first();
-          
-          if (backref.length && backref.attr('href')) {
-            const href = backref.attr('href');
-            // Keep the backref link in the content
-            return `<div id="${node.id}">${content} <a href="${href}">↩</a></div>`;
-          } else {
-            // If no backref found, try to create one based on common patterns
-            const refId = `fnref${number}` || `footnote-ref-${node.id}`;
-            return `<div id="${node.id}">${content} <a href="#${refId}">↩</a></div>`;
-          }
-        }
-        return content;
-      }
-    });
     
 
     const markdown = turndownService.turndown($.html());
