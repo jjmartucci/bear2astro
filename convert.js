@@ -265,8 +265,8 @@ function processHtmlFile(htmlFilePath) {
     
     // Add all other metadata from meta tags
     for (const [key, value] of Object.entries(metadata)) {
-      // Skip title and description as they're already added
-      if (key !== 'title' && key !== 'description') {
+      // Skip title, description, and tags as they're already added or will be added separately
+      if (key !== 'title' && key !== 'description' && key !== 'tags') {
         yamlLines.push(`${key}: ${value}`);
       }
     }
