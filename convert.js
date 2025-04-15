@@ -74,14 +74,24 @@ function processHtmlFile(htmlFilePath) {
     const $ = cheerio.load(htmlContent);
 
     // Extract metadata from head if available
-    const metaCreated =
-      $('meta[name="created"]').attr("content") || new Date().toISOString();
-    const metaModified =
-      $('meta[name="modified"]').attr("content") || new Date().toISOString();
-    const title =
-      $('meta[name="title"]').attr("content") ||
-      $("title").text().trim() ||
-      "Untitled";
+    // If a metatag appears twice, use the second one
+    const metaCreatedElements = $('meta[name="created"]');
+    const metaCreated = 
+      metaCreatedElements.length > 1 
+        ? $(metaCreatedElements[metaCreatedElements.length - 1]).attr("content") 
+        : (metaCreatedElements.attr("content") || new Date().toISOString());
+    
+    const metaModifiedElements = $('meta[name="modified"]');
+    const metaModified = 
+      metaModifiedElements.length > 1 
+        ? $(metaModifiedElements[metaModifiedElements.length - 1]).attr("content") 
+        : (metaModifiedElements.attr("content") || new Date().toISOString());
+    
+    const titleElements = $('meta[name="title"]');
+    const title = 
+      titleElements.length > 1 
+        ? $(titleElements[titleElements.length - 1]).attr("content") 
+        : (titleElements.attr("content") || $("title").text().trim() || "Untitled");
 
     // Extract the first paragraph for description
     const firstParagraph = $("p").first().text().trim() || "";
