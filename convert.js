@@ -190,6 +190,29 @@ function processHtmlFile(htmlFilePath) {
     const turndownService = new TurndownService({
       headingStyle: "atx",
       codeBlockStyle: "fenced",
+      // Preserve ID attributes in the output
+      headingStyle: "atx",
+      codeBlockStyle: "fenced",
+    });
+
+    // Preserve ID attributes in the output
+    turndownService.addRule('preserveIds', {
+      filter: function(node) {
+        // Apply to any element with an ID attribute
+        return node.id && node.id.length > 0;
+      },
+      replacement: function(content, node, options) {
+        // If this is a heading, add the ID as an anchor
+        if (node.tagName.match(/^H[1-6]$/)) {
+          const level = node.tagName.charAt(1);
+          const prefix = '#'.repeat(level);
+          return `${prefix} ${content} {#${node.id}}\n\n`;
+        }
+        
+        // For other elements, add the ID as an HTML attribute
+        // This will be preserved in the markdown
+        return `<span id="${node.id}">${content}</span>`;
+      }
     });
     
     // Add custom rule for iframes and embedded content
@@ -215,42 +238,7 @@ function processHtmlFile(htmlFilePath) {
       }
     });
     
-    // Add custom rule for footnotes
-    turndownService.addRule('footnote', {
-      filter: function(node) {
-        // Match elements with class 'footnote' or role 'doc-footnote'
-        return (
-          node.classList && 
-          (node.classList.contains('footnote') || 
-           node.getAttribute('role') === 'doc-footnote')
-        );
-      },
-      replacement: function(content, node, options) {
-        // Get the footnote ID or generate one
-        const id = node.id || `footnote-${Math.floor(Math.random() * 10000)}`;
-        const refId = `footnote-ref-${id}`;
-        
-        // Extract the footnote content
-        const footnoteContent = content.trim();
-        
-        // Check if this is a footnote reference or the actual footnote
-        const isReference = node.tagName === 'A' || node.tagName === 'SUP';
-        
-        if (isReference) {
-          // This is a reference to a footnote
-          const number = node.textContent.trim().replace(/[\[\]]/g, '');
-          return `[^${number}]`;
-        } else {
-          // This is the actual footnote content
-          const number = node.getAttribute('data-footnote-number') || 
-                         node.querySelector('sup')?.textContent.trim().replace(/[\[\]]/g, '') || 
-                         id.replace(/\D/g, '');
-          return `\n\n[^${number}]: ${footnoteContent}\n\n`;
-        }
-      }
-    });
-    
-    // Add rule for footnote references
+    // Add custom rule for footnote references
     turndownService.addRule('footnoteReference', {
       filter: function(node) {
         // Match elements that are likely footnote references
@@ -262,11 +250,35 @@ function processHtmlFile(htmlFilePath) {
         );
       },
       replacement: function(content, node) {
-        // Extract the footnote number
-        const number = node.textContent.trim().replace(/[\[\]]/g, '');
-        return `[^${number}]`;
+        // Get the href target
+        const href = node.getAttribute('href');
+        if (href && href.startsWith('#')) {
+          // Preserve the link with the original ID reference
+          return `<a href="${href}">${content}</a>`;
+        }
+        return content;
       }
     });
+    
+    // Add custom rule for footnotes
+    turndownService.addRule('footnote', {
+      filter: function(node) {
+        // Match elements with class 'footnote' or role 'doc-footnote'
+        return (
+          node.classList && 
+          (node.classList.contains('footnote') || 
+           node.getAttribute('role') === 'doc-footnote')
+        );
+      },
+      replacement: function(content, node) {
+        // Preserve the ID for footnote targets
+        if (node.id) {
+          return `<div id="${node.id}">${content}</div>`;
+        }
+        return content;
+      }
+    });
+    
 
     const markdown = turndownService.turndown($.html());
 
