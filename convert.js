@@ -214,6 +214,59 @@ function processHtmlFile(htmlFilePath) {
                '\n\n';
       }
     });
+    
+    // Add custom rule for footnotes
+    turndownService.addRule('footnote', {
+      filter: function(node) {
+        // Match elements with class 'footnote' or role 'doc-footnote'
+        return (
+          node.classList && 
+          (node.classList.contains('footnote') || 
+           node.getAttribute('role') === 'doc-footnote')
+        );
+      },
+      replacement: function(content, node, options) {
+        // Get the footnote ID or generate one
+        const id = node.id || `footnote-${Math.floor(Math.random() * 10000)}`;
+        const refId = `footnote-ref-${id}`;
+        
+        // Extract the footnote content
+        const footnoteContent = content.trim();
+        
+        // Check if this is a footnote reference or the actual footnote
+        const isReference = node.tagName === 'A' || node.tagName === 'SUP';
+        
+        if (isReference) {
+          // This is a reference to a footnote
+          const number = node.textContent.trim().replace(/[\[\]]/g, '');
+          return `[^${number}]`;
+        } else {
+          // This is the actual footnote content
+          const number = node.getAttribute('data-footnote-number') || 
+                         node.querySelector('sup')?.textContent.trim().replace(/[\[\]]/g, '') || 
+                         id.replace(/\D/g, '');
+          return `\n\n[^${number}]: ${footnoteContent}\n\n`;
+        }
+      }
+    });
+    
+    // Add rule for footnote references
+    turndownService.addRule('footnoteReference', {
+      filter: function(node) {
+        // Match elements that are likely footnote references
+        return (
+          (node.tagName === 'A' || node.tagName === 'SUP') &&
+          (node.classList.contains('footnote-ref') || 
+           node.getAttribute('role') === 'doc-noteref' ||
+           (node.textContent.match(/^\[\d+\]$/) && node.getAttribute('href')?.startsWith('#')))
+        );
+      },
+      replacement: function(content, node) {
+        // Extract the footnote number
+        const number = node.textContent.trim().replace(/[\[\]]/g, '');
+        return `[^${number}]`;
+      }
+    });
 
     const markdown = turndownService.turndown($.html());
 
