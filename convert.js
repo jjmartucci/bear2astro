@@ -16,7 +16,7 @@ function slugify(text) {
 }
 
 const {
-  ORGANIZED_BY_TAG,
+  IGNORE_TAGS,
   INPUT_FOLDER,
   OUTPUT_FOLDER,
   IMAGE_FOLDER,
@@ -75,39 +75,42 @@ function processHtmlFile(htmlFilePath) {
     const $ = cheerio.load(htmlContent);
 
     // Parse the IGNORE_META list
-    const ignoreMetaList = IGNORE_META ? IGNORE_META.split(',').map(item => item.trim().toLowerCase()) : [];
-    
+    const ignoreMetaList = IGNORE_META
+      ? IGNORE_META.split(",").map((item) => item.trim().toLowerCase())
+      : [];
+
     // Extract all meta tags and create a metadata object
     const metadata = {};
-    
+
     // Process all meta tags with 'name' attribute
-    $('meta[name]').each((i, elem) => {
-      const name = $(elem).attr('name').toLowerCase();
-      const content = $(elem).attr('content');
-      
+    $("meta[name]").each((i, elem) => {
+      const name = $(elem).attr("name").toLowerCase();
+      const content = $(elem).attr("content");
+
       // Skip meta tags in the ignore list
       if (ignoreMetaList.includes(name)) {
         return;
       }
-      
+
       // If a metatag appears twice, use the second one
       metadata[name] = content;
     });
-    
+
     // Ensure we have the basic required metadata
     if (!metadata.created) {
       metadata.created = new Date().toISOString();
     }
-    
+
     if (!metadata.modified) {
       metadata.modified = new Date().toISOString();
     }
-    
+
     // Get title from meta or title tag
     const title = metadata.title || $("title").text().trim() || "Untitled";
-    
+
     // Extract the first paragraph for description if not in metadata
-    const description = metadata.description || $("p").first().text().trim() || "";
+    const description =
+      metadata.description || $("p").first().text().trim() || "";
 
     // Extract the first image if available
     let firstImagePath = "";
@@ -250,30 +253,30 @@ function processHtmlFile(htmlFilePath) {
 
     // Create YAML front matter
     let yamlLines = ["---"];
-    
+
     // Add title and description first
     yamlLines.push(`title: "${title}"`);
     yamlLines.push(`description: "${description}"`);
-    
+
     // Add image if available
     if (firstImagePath) {
       yamlLines.push(`image: "${firstImagePath}"`);
     }
-    
+
     // Add tags
     yamlLines.push(`tags: [${tags.map((tag) => `"${tag}"`).join(", ")}]`);
-    
+
     // Add all other metadata from meta tags
     for (const [key, value] of Object.entries(metadata)) {
       // Skip title, description, and tags as they're already added or will be added separately
-      if (key !== 'title' && key !== 'description' && key !== 'tags') {
+      if (key !== "title" && key !== "description" && key !== "tags") {
         yamlLines.push(`${key}: ${value}`);
       }
     }
-    
+
     yamlLines.push("---");
     yamlLines.push("");
-    
+
     const yamlHeader = yamlLines.join("\n") + markdown;
 
     // Generate slugified output filename
