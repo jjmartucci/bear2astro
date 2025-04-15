@@ -129,6 +129,11 @@ function processHtmlFile(htmlFilePath) {
     // Remove the head element so it's not in the markdown output
     $("head").remove();
 
+    // Parse the IGNORE_TAGS list at the beginning
+    const ignoreTagsList = IGNORE_TAGS
+      ? IGNORE_TAGS.split(",").map((item) => item.trim().toLowerCase())
+      : [];
+      
     // Extract hashtags from .hashtag spans
     const tags = [];
     $(".hashtag").each((i, elem) => {
@@ -136,18 +141,15 @@ function processHtmlFile(htmlFilePath) {
       // Remove # if present and add to tags array
       if (tag) {
         let cleanTag = tag.startsWith("#") ? tag.substring(1) : tag;
-        // Parse the IGNORE_TAGS list
-        const ignoreTagsList = IGNORE_TAGS
-          ? IGNORE_TAGS.split(",").map((item) => item.trim().toLowerCase())
-          : [];
+        
+        // If UNNEST_TAGS is true and the tag has a parent/child format,
+        // only use the child part
+        if (UNNEST_TAGS === "true" && cleanTag.includes("/")) {
+          cleanTag = cleanTag.split("/").pop();
+        }
         
         // Ignore tags in the IGNORE_TAGS list
         if (!ignoreTagsList.includes(cleanTag.toLowerCase())) {
-          // If UNNEST_TAGS is true and the tag has a parent/child format,
-          // only use the child part
-          if (UNNEST_TAGS === "true" && cleanTag.includes("/")) {
-            cleanTag = cleanTag.split("/").pop();
-          }
           tags.push(cleanTag);
         }
       }
