@@ -189,10 +189,14 @@ function processHtmlFile(htmlFilePath) {
         let currentNode = img[0].nextSibling;
         let nextItalic = null;
 
-        // Loop through siblings until we find an italic element or a non-br element
+        // Loop through siblings until we find an italic element or a non-whitespace, non-br element
         while (currentNode) {
-          console.log(`node`, currentNode.nodeType);
-          console.log($(currentNode));
+          // Skip text nodes that are just whitespace
+          if (currentNode.nodeType === 3 && currentNode.nodeValue.trim() === '') {
+            currentNode = currentNode.nextSibling;
+            continue;
+          }
+          
           // If it's a br element, move to the next sibling
           if (currentNode.tagName === "br") {
             currentNode = currentNode.nextSibling;
@@ -210,7 +214,7 @@ function processHtmlFile(htmlFilePath) {
             break;
           }
 
-          // If we found a non-br, non-italic element, stop looking
+          // If we found a non-whitespace, non-br, non-italic element, stop looking
           break;
         }
 
@@ -222,12 +226,13 @@ function processHtmlFile(htmlFilePath) {
             // Remove the italic element
             nextItalic.remove();
 
-            // Also remove any br elements between the image and the italic text
+            // Also remove any br elements and whitespace between the image and the italic text
             let brNode = img[0].nextSibling;
             while (
               brNode &&
               (brNode.tagName === "br" ||
-                (brNode.nodeType === 1 && $(brNode).is("br")))
+                (brNode.nodeType === 1 && $(brNode).is("br")) ||
+                (brNode.nodeType === 3 && brNode.nodeValue.trim() === ''))
             ) {
               const nextBr = brNode.nextSibling;
               $(brNode).remove();
