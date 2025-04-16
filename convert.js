@@ -178,6 +178,31 @@ function processHtmlFile(htmlFilePath) {
 
     // Process images and attachments
     const baseDir = path.dirname(htmlFilePath);
+    
+    // If ITALICS_TO_ALT is true, find images followed by italic text and use the italic text as alt text
+    if (ITALICS_TO_ALT === "true") {
+      $("img").each((i, elem) => {
+        const img = $(elem);
+        const parent = img.parent();
+        
+        // Check if the image is followed by an italic element
+        const nextElem = img[0].nextSibling;
+        const nextItalic = nextElem && 
+                          ($(nextElem).is('i') || $(nextElem).is('em')) ? 
+                          $(nextElem) : null;
+        
+        if (nextItalic) {
+          // Use the italic text as alt text for the image
+          const italicText = nextItalic.text().trim();
+          if (italicText) {
+            img.attr('alt', italicText);
+            // Remove the italic element
+            nextItalic.remove();
+          }
+        }
+      });
+    }
+    
     $(
       "img, [href$='.pdf'], [href$='.doc'], [href$='.docx'], [href$='.xls'], [href$='.xlsx'], [href$='.ppt'], [href$='.pptx'], [href$='.zip']"
     ).each((i, elem) => {
