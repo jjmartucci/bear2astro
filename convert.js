@@ -283,6 +283,18 @@ function processHtmlFile(htmlFilePath) {
       headingStyle: "atx",
       codeBlockStyle: "fenced",
     });
+    
+    // Add custom rule for images to preserve alt text
+    turndownService.addRule('image', {
+      filter: 'img',
+      replacement: function (content, node) {
+        const alt = node.getAttribute('alt') || '';
+        const src = node.getAttribute('src') || '';
+        const title = node.getAttribute('title') || '';
+        const titlePart = title ? ` "${title}"` : '';
+        return src ? `![${alt}](${src}${titlePart})` : '';
+      }
+    });
 
     // Add custom rule for iframes and embedded content
     turndownService.addRule("iframe", {
