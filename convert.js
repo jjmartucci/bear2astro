@@ -178,48 +178,57 @@ function processHtmlFile(htmlFilePath) {
 
     // Process images and attachments
     const baseDir = path.dirname(htmlFilePath);
-    
+
     // If ITALICS_TO_ALT is true, find images followed by italic text and use the italic text as alt text
+
     if (ITALICS_TO_ALT === "true") {
       $("img").each((i, elem) => {
         const img = $(elem);
-        const parent = img.parent();
-        
+
         // Find the next element that could be italic, looking past any br elements
         let currentNode = img[0].nextSibling;
         let nextItalic = null;
-        
+
         // Loop through siblings until we find an italic element or a non-br element
         while (currentNode) {
+          console.log(`node`, currentNode.nodeType);
+          console.log($(currentNode));
           // If it's a br element, move to the next sibling
-          if (currentNode.tagName === 'br') {
+          if (currentNode.tagName === "br") {
             currentNode = currentNode.nextSibling;
             continue;
           }
-          
+
           // Check if it's an italic element
-          if (currentNode.tagName === 'i' || currentNode.tagName === 'em' || 
-              (currentNode.nodeType === 1 && ($(currentNode).is('i') || $(currentNode).is('em')))) {
+          if (
+            currentNode.tagName === "i" ||
+            currentNode.tagName === "em" ||
+            (currentNode.nodeType === 1 &&
+              ($(currentNode).is("i") || $(currentNode).is("em")))
+          ) {
             nextItalic = $(currentNode);
             break;
           }
-          
+
           // If we found a non-br, non-italic element, stop looking
           break;
         }
-        
+
         if (nextItalic) {
           // Use the italic text as alt text for the image
           const italicText = nextItalic.text().trim();
           if (italicText) {
-            img.attr('alt', italicText);
+            img.attr("alt", italicText);
             // Remove the italic element
             nextItalic.remove();
-            
+
             // Also remove any br elements between the image and the italic text
             let brNode = img[0].nextSibling;
-            while (brNode && (brNode.tagName === 'br' || 
-                  (brNode.nodeType === 1 && $(brNode).is('br')))) {
+            while (
+              brNode &&
+              (brNode.tagName === "br" ||
+                (brNode.nodeType === 1 && $(brNode).is("br")))
+            ) {
               const nextBr = brNode.nextSibling;
               $(brNode).remove();
               brNode = nextBr;
@@ -228,7 +237,7 @@ function processHtmlFile(htmlFilePath) {
         }
       });
     }
-    
+
     $(
       "img, [href$='.pdf'], [href$='.doc'], [href$='.docx'], [href$='.xls'], [href$='.xlsx'], [href$='.ppt'], [href$='.pptx'], [href$='.zip']"
     ).each((i, elem) => {
@@ -283,17 +292,17 @@ function processHtmlFile(htmlFilePath) {
       headingStyle: "atx",
       codeBlockStyle: "fenced",
     });
-    
+
     // Add custom rule for images to preserve alt text
-    turndownService.addRule('image', {
-      filter: 'img',
+    turndownService.addRule("image", {
+      filter: "img",
       replacement: function (content, node) {
-        const alt = node.getAttribute('alt') || '';
-        const src = node.getAttribute('src') || '';
-        const title = node.getAttribute('title') || '';
-        const titlePart = title ? ` "${title}"` : '';
-        return src ? `![${alt}](${src}${titlePart})` : '';
-      }
+        const alt = node.getAttribute("alt") || "";
+        const src = node.getAttribute("src") || "";
+        const title = node.getAttribute("title") || "";
+        const titlePart = title ? ` "${title}"` : "";
+        return src ? `![${alt}](${src}${titlePart})` : "";
+      },
     });
 
     // Add custom rule for iframes and embedded content
