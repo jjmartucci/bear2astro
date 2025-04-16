@@ -1,0 +1,4 @@
+.aider*
+.env
+test/
+node_modules/
