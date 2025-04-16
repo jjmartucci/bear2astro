@@ -185,11 +185,28 @@ function processHtmlFile(htmlFilePath) {
         const img = $(elem);
         const parent = img.parent();
         
-        // Check if the image is followed by an italic element
-        const nextElem = img[0].nextSibling;
-        const nextItalic = nextElem && 
-                          ($(nextElem).is('i') || $(nextElem).is('em')) ? 
-                          $(nextElem) : null;
+        // Find the next element that could be italic, looking past any br elements
+        let currentNode = img[0].nextSibling;
+        let nextItalic = null;
+        
+        // Loop through siblings until we find an italic element or a non-br element
+        while (currentNode) {
+          // If it's a br element, move to the next sibling
+          if (currentNode.tagName === 'br') {
+            currentNode = currentNode.nextSibling;
+            continue;
+          }
+          
+          // Check if it's an italic element
+          if (currentNode.tagName === 'i' || currentNode.tagName === 'em' || 
+              (currentNode.nodeType === 1 && ($(currentNode).is('i') || $(currentNode).is('em')))) {
+            nextItalic = $(currentNode);
+            break;
+          }
+          
+          // If we found a non-br, non-italic element, stop looking
+          break;
+        }
         
         if (nextItalic) {
           // Use the italic text as alt text for the image
@@ -198,6 +215,15 @@ function processHtmlFile(htmlFilePath) {
             img.attr('alt', italicText);
             // Remove the italic element
             nextItalic.remove();
+            
+            // Also remove any br elements between the image and the italic text
+            let brNode = img[0].nextSibling;
+            while (brNode && (brNode.tagName === 'br' || 
+                  (brNode.nodeType === 1 && $(brNode).is('br')))) {
+              const nextBr = brNode.nextSibling;
+              $(brNode).remove();
+              brNode = nextBr;
+            }
           }
         }
       });
